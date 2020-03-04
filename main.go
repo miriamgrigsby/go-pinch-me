@@ -1,15 +1,17 @@
 package main
 
 import (
+	"database/sql"
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-
-	// "gobot.io/x/gobot"
-	"gobot.io/x/gobot/drivers/gpio"
+	_ "github.com/lib/pq"
 	"gobot.io/x/gobot/platforms/firmata"
 )
 
@@ -27,26 +29,50 @@ type Grip struct {
 }
 
 type NewBot struct {
-	NewBot string `json:"NewBot"`
-	Grip       uint8 `json:"Grip"`
-	WristPitch uint8 `json:"WristPitch"`
-	WristRoll  uint8 `json:"WristRoll"`
-	Elbow      uint8 `json:"Elbow"`
-	Shoulder   uint8 `json:"Shoulder"`
-	Waist      uint8 `json:"Waist"`
+	NewBot     string `json:"NewBot"`
+	Grip       uint8  `json:"Grip"`
+	WristPitch uint8  `json:"WristPitch"`
+	WristRoll  uint8  `json:"WristRoll"`
+	Elbow      uint8  `json:"Elbow"`
+	Shoulder   uint8  `json:"Shoulder"`
+	Waist      uint8  `json:"Waist"`
 }
 
+type savingActions struct {
+	ID    int
+	Names []string `json:"Names"`
+	Bots  []NewBot `json:"Bots"`
+}
+
+type Name struct {
+	Name string `json:"Name"`
+}
+
+type savingEachAction struct {
+	ID    int
+	Attrs NewBot
+}
+
+var dbBotActions []NewBot
+var NewBotActions []NewBot
+
+var db *sql.DB
+
 var firmataAdaptor = firmata.NewAdaptor("/dev/cu.usbmodem14201")
-var servo1 = gpio.NewServoDriver(firmataAdaptor, "10")
-var servo2 = gpio.NewServoDriver(firmataAdaptor, "9")
-var servo3 = gpio.NewServoDriver(firmataAdaptor, "8")
-var servo4 = gpio.NewServoDriver(firmataAdaptor, "7")
-var servo5 = gpio.NewServoDriver(firmataAdaptor, "6")
-var servo6 = gpio.NewServoDriver(firmataAdaptor, "5")
 
 // var robot1 *gobot.Robot
+func (a NewBot) Value() (driver.Value, error) {
+	return json.Marshal(a)
+}
 
-var runNum int = 0
+func (a *NewBot) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	return json.Unmarshal(b, &a)
+}
 
 func handleRequest() {
 	myRouter := gin.Default()
@@ -59,6 +85,11 @@ func handleRequest() {
 	myRouter.Any("/dragNdrop", handleDragNDrop)
 	myRouter.Any("/duck", handleDuckDuck)
 	myRouter.Any("/newBot", handleNewBot)
+	myRouter.Any("/onSave", handleSave)
+	myRouter.Any("/findName", handleFindName)
+	myRouter.Any("/showNewRobot", handleShowNewRobot)
+	myRouter.Any("/deleteRobot", handleDeleteRobot)
+	myRouter.Any("/onReset", handleReset)
 
 	myRouter.Run(":3030")
 }
@@ -101,16 +132,233 @@ func handleRun(c *gin.Context, g Grip) {
 	firmataAdaptor.ServoWrite("5", g.Waist)
 }
 
+func handleReset(c *gin.Context) {
+	NewBotActions = nil
+}
+
 func handleNewBot(c *gin.Context) {
 	var n NewBot
 	c.Bind(&n)
-	fmt.Println(n)
+
+	NewBotActions = append(NewBotActions, n)
+
+}
+
+func handleSave(c *gin.Context) {
+	db, err := sql.Open("postgres", "user=miriamgrigsby dbname=robot sslmode=disable")
+	if err != nil {
+		panic(err.Error())
+	}
+	for i := 0; i < len(NewBotActions); i++ {
+		_, err = db.Exec("INSERT INTO robotactions (actions) VALUES($1)", NewBotActions[i])
+	}
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+}
+
+func unique(intSlice []string) []string {
+	keys := make(map[string]bool)
+	list := []string{}
+	for _, entry := range intSlice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
+}
+
+func handleFindName(c *gin.Context) {
+	db, err := sql.Open("postgres", "user=miriamgrigsby dbname=robot sslmode=disable")
+	if err != nil {
+		panic(err.Error())
+	}
+	var savingActions savingActions
+	rows, err := db.Query("SELECT actions FROM robotactions")
+	defer rows.Close()
+	for rows.Next() {
+		var savedBotActions NewBot
+		err = rows.Scan(&savedBotActions)
+		savingActions.Names = append(savingActions.Names, savedBotActions.NewBot)
+		savingActions.Bots = append(savingActions.Bots, savedBotActions)
+	}
+	savingActions.Names = unique(savingActions.Names)
+	c.JSON(200, savingActions.Names)
+}
+
+func handleDeleteRobot(c *gin.Context) {
+	var n Name
+	c.Bind(&n)
+	db, err := sql.Open("postgres", "user=miriamgrigsby dbname=robot sslmode=disable")
+	res, err := db.Exec("DELETE FROM robotactions WHERE actions -> 'NewBot' ? $1", n.Name)
+	if err != nil {
+		panic(err.Error())
+	}
+	count, _ := res.RowsAffected()
+	fmt.Println(count)
+}
+
+func handleShowNewRobot(c *gin.Context) {
+	var moveAction savingActions
+	var n Name
+	c.Bind(&n)
+	db, err := sql.Open("postgres", "user=miriamgrigsby dbname=robot sslmode=disable")
+	rows, err := db.Query("SELECT * FROM robotactions WHERE actions -> 'NewBot' ? $1", n.Name)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var savingActions savingEachAction
+		err = rows.Scan(&savingActions.ID, &savingActions.Attrs)
+		if err != nil {
+			panic(err.Error())
+		}
+		moveAction.Bots = append(moveAction.Bots, savingActions.Attrs)
+	}
+
+	firmataAdaptor.Connect()
+	firmataAdaptor.ServoWrite("10", 55)
+	firmataAdaptor.ServoWrite("9", 20)
+	firmataAdaptor.ServoWrite("8", 5)
+	firmataAdaptor.ServoWrite("7", 120)
+	firmataAdaptor.ServoWrite("6", 60)
+	firmataAdaptor.ServoWrite("5", 160)
+	time.Sleep(1*time.Second)
+
+	var newBot NewBot
+	newBot = moveAction.Bots[0]
+	
+	var servo1, servo2, servo3, servo4, servo5, servo6 uint8 = 0, 0, 0, 0, 0, 0
+	// fmt.Println(len(moveAction.Bots))
+	for i := 1; i < len(moveAction.Bots); i++ {
+		fmt.Println(newBot)
+		if newBot.Grip > moveAction.Bots[i].Grip {
+			servo1 = 1
+		} else {
+			servo1 = 0
+		}
+		if newBot.WristPitch > moveAction.Bots[i].WristPitch {
+			servo2 = 1
+		} else {
+			servo2 = 0
+		}
+		if newBot.WristRoll > moveAction.Bots[i].WristRoll {
+			servo3 = 1
+		} else {
+			servo3 = 0
+		}
+		if newBot.Elbow > moveAction.Bots[i].Elbow {
+			servo4 = 1
+		} else {
+			servo4 = 0
+		}
+		if newBot.Shoulder > moveAction.Bots[i].Shoulder {
+			servo5 = 1
+		} else {
+			servo5 = 0
+		}
+		if newBot.Waist > moveAction.Bots[i].Waist {
+			servo6 = 1
+		} else {
+			servo6 = 0
+		}
+
+		var wg9 sync.WaitGroup
+		wg9.Add(6)
+		go func(a uint8, wg9 *sync.WaitGroup) {
+			defer wg9.Done()
+			for j := newBot.Grip; j != a; {
+				firmataAdaptor.ServoWrite("10", j)
+				time.Sleep(5 * time.Millisecond)
+				if servo1 == 1 {
+					j--
+				} else {
+					j++
+				}
+			}
+		}(uint8(moveAction.Bots[i].Grip), &wg9)
+
+		go func(a uint8, wg9 *sync.WaitGroup) {
+			defer wg9.Done()
+			for j := newBot.WristPitch; j != a; {
+				firmataAdaptor.ServoWrite("9", j)
+				time.Sleep(5 * time.Millisecond)
+				if servo2 == 1 {
+					j--
+				} else {
+					j++
+				}
+			}
+		}(uint8(moveAction.Bots[i].WristPitch), &wg9)
+
+		go func(a uint8, wg9 *sync.WaitGroup) {
+			defer wg9.Done()
+			for j := newBot.WristRoll; j != a; {
+				firmataAdaptor.ServoWrite("8", j)
+				time.Sleep(5 * time.Millisecond)
+				if servo3 == 1 {
+					j--
+				} else {
+					j++
+				}
+			}
+		}(uint8(moveAction.Bots[i].WristRoll), &wg9)
+
+		go func(a uint8, wg9 *sync.WaitGroup) {
+			defer wg9.Done()
+			for j := newBot.Elbow; j != a; {
+				firmataAdaptor.ServoWrite("7", j)
+				time.Sleep(5 * time.Millisecond)
+				if servo4 == 1 {
+					j--
+				} else {
+					j++
+				}
+			}
+		}(uint8(moveAction.Bots[i].Elbow), &wg9)
+
+		go func(a uint8, wg9 *sync.WaitGroup) {
+			defer wg9.Done()
+			for j := newBot.Shoulder; j != a; {
+				firmataAdaptor.ServoWrite("6", j)
+				time.Sleep(15 * time.Millisecond)
+				if servo5 == 1 {
+					j--
+				} else {
+					j++
+				}
+			}
+		}(uint8(moveAction.Bots[i].Shoulder), &wg9)
+
+		go func(a uint8, wg9 *sync.WaitGroup) {
+			defer wg9.Done()
+			for j := newBot.Waist; j != a; {
+				firmataAdaptor.ServoWrite("5", j)
+				time.Sleep(20 * time.Millisecond)
+				if servo6 == 1 {
+					j--
+				} else {
+					j++
+				}
+			}
+		}(uint8(moveAction.Bots[i].Waist), &wg9)
+		wg9.Wait()
+		if n.Name != "Lickity Splickty" {
+			time.Sleep(1*time.Second)
+		}
+		newBot = moveAction.Bots[i]
+	}
 }
 
 func handleDragNDrop(c *gin.Context) {
 	var g Grip
 	c.Bind(&g)
 	g.WristRoll = 5
+	g.Waist = 160
 	handleRun(c, g)
 	time.Sleep(1 * time.Second)
 
@@ -138,7 +386,7 @@ func handleDragNDrop(c *gin.Context) {
 			firmataAdaptor.ServoWrite("7", a)
 			time.Sleep(9 * time.Millisecond)
 		}
-	}(uint8(165), &wg1)
+	}(uint8(168), &wg1)
 	go func(i uint8, wg1 *sync.WaitGroup) {
 		defer wg1.Done()
 		for a := g.Shoulder; a > i; a-- {
@@ -168,9 +416,8 @@ func handleDragNDrop(c *gin.Context) {
 	}(uint8(60), &wg2)
 	go func(j uint8, wg2 *sync.WaitGroup) {
 		defer wg2.Done()
-		for b := uint8(20); b < j; b++ {
+		for b := uint8(50); b < j; b++ {
 			firmataAdaptor.ServoWrite("9", b)
-			servo2.Move(b)
 			time.Sleep(7 * time.Millisecond)
 		}
 	}(uint8(110), &wg2)
@@ -181,7 +428,7 @@ func handleDragNDrop(c *gin.Context) {
 	wg3.Add(2)
 	go func(k uint8, wg3 *sync.WaitGroup) {
 		defer wg3.Done()
-		for d := uint8(160); d > k; d-- {
+		for d := uint8(163); d > k; d-- {
 			firmataAdaptor.ServoWrite("5", d)
 			time.Sleep(20 * time.Millisecond)
 		}
@@ -219,7 +466,7 @@ func handleDragNDrop(c *gin.Context) {
 			firmataAdaptor.ServoWrite("5", e)
 			time.Sleep(20 * time.Millisecond)
 		}
-	}(uint8(160), &wg4)
+	}(uint8(157), &wg4)
 	wg4.Wait()
 
 }
@@ -231,7 +478,7 @@ func handleDuckDuck(c *gin.Context) {
 	g.WristRoll = 5
 	g.Elbow = 120
 	g.Shoulder = 60
-	g.Waist = 160
+	g.Waist = 157
 	handleRun(c, g)
 	time.Sleep(1 * time.Second)
 
@@ -302,7 +549,7 @@ func handleDuckDuck(c *gin.Context) {
 			firmataAdaptor.ServoWrite("5", f)
 			time.Sleep(20 * time.Millisecond)
 		}
-	}(uint8(110), &wg6)
+	}(uint8(105), &wg6)
 	time.Sleep(1250 * time.Millisecond)
 
 	go func(m uint8, wg6 *sync.WaitGroup) {
@@ -343,16 +590,16 @@ func handleDuckDuck(c *gin.Context) {
 			firmataAdaptor.ServoWrite("6", f)
 			time.Sleep(15 * time.Millisecond)
 		}
-	}(uint8(60), &wg7)
+	}(uint8(64), &wg7)
 	time.Sleep(500 * time.Millisecond)
 
 	go func(m uint8, wg7 *sync.WaitGroup) {
 		defer wg7.Done()
-		for f := uint8(100); f < m; f++ {
+		for f := uint8(105); f < m; f++ {
 			firmataAdaptor.ServoWrite("5", f)
 			time.Sleep(20 * time.Millisecond)
 		}
-	}(uint8(160), &wg7)
+	}(uint8(157), &wg7)
 	time.Sleep(1250 * time.Millisecond)
 
 	go func(m uint8, wg7 *sync.WaitGroup) {
@@ -379,7 +626,7 @@ func handleDuckDuck(c *gin.Context) {
 			firmataAdaptor.ServoWrite("9", f)
 			time.Sleep(5 * time.Millisecond)
 		}
-	}(uint8(77), &wg7)
+	}(uint8(75), &wg7)
 	time.Sleep(500 * time.Millisecond)
 
 	go func(m uint8, wg7 *sync.WaitGroup) {
@@ -388,7 +635,7 @@ func handleDuckDuck(c *gin.Context) {
 			firmataAdaptor.ServoWrite("10", f)
 			time.Sleep(5 * time.Millisecond)
 		}
-	}(uint8(93), &wg7)
+	}(uint8(90), &wg7)
 	time.Sleep(2000 * time.Millisecond)
 
 	go func(m uint8, wg7 *sync.WaitGroup) {
@@ -413,7 +660,7 @@ func handleDuckDuck(c *gin.Context) {
 			firmataAdaptor.ServoWrite("7", f)
 			time.Sleep(15 * time.Millisecond)
 		}
-	}(uint8(140), &wg7)
+	}(uint8(143), &wg7)
 
 	wg7.Wait()
 
@@ -440,7 +687,7 @@ func handleDuckDuck(c *gin.Context) {
 
 	go func(m uint8, wg8 *sync.WaitGroup) {
 		defer wg8.Done()
-		for f := uint8(140); f > m; f-- {
+		for f := uint8(143); f > m; f-- {
 			firmataAdaptor.ServoWrite("7", f)
 			time.Sleep(5 * time.Millisecond)
 		}
@@ -471,7 +718,7 @@ func handleDuckDuck(c *gin.Context) {
 			time.Sleep(15 * time.Millisecond)
 		}
 	}(uint8(140), &wg8)
-	time.Sleep(1750*time.Millisecond)
+	time.Sleep(1750 * time.Millisecond)
 
 	go func(m uint8, wg8 *sync.WaitGroup) {
 		defer wg8.Done()
@@ -490,68 +737,4 @@ func handleDuckDuck(c *gin.Context) {
 	}(uint8(70), &wg8)
 
 	wg8.Wait()
-	// work := func() {
-
-	// 	gobot.After(1*time.Second, func() {
-	// 		servo1.Move(55)
-	// 		servo2.Move(85)
-	// 		servo4.Move(120)
-	// 		time.Sleep(500 * time.Millisecond)
-	// 		servo5.Move(0)
-	// 		servo6.Move(105)
-	// 	})
-
-	// 	gobot.After(5*time.Second, func() {
-	// 		servo1.Move(55)
-	// 		servo2.Move(110)
-	// 		servo4.Move(120)
-	// 		servo5.Move(60)
-	// 		servo6.Move(125)
-	// 	})
-
-	// 	gobot.After(8*time.Second, func() {
-	// 		servo1.Move(55)
-	// 		servo2.Move(85)
-	// 		servo4.Move(120)
-	// 		servo5.Move(0)
-	// 		servo6.Move(125)
-	// 	})
-
-	// 	gobot.After(11*time.Second, func() {
-	// 		servo1.Move(55)
-	// 		servo2.Move(110)
-	// 		servo4.Move(120)
-	// 		servo5.Move(60)
-	// 		servo6.Move(140)
-	// 	})
-
-	// 	gobot.After(14*time.Second, func() {
-	// 		servo1.Move(55)
-	// 		servo2.Move(85)
-	// 		servo4.Move(120)
-	// 		servo5.Move(0)
-	// 		servo6.Move(140)
-	// 		time.Sleep(500 * time.Millisecond)
-	// 		servo1.Move(150)
-	// 		time.Sleep(1500 * time.Millisecond)
-	// 		servo1.Move(55)
-	// 	})
-
-	// 	gobot.After(17*time.Second, func() {
-	// 		servo1.Move(55)
-	// 		servo2.Move(20)
-	// 		servo4.Move(120)
-	// 		servo5.Move(50)
-	// 		servo6.Move(150)
-	// 		time.Sleep(1500 * time.Millisecond)
-	// 		servo1.Move(150)
-	// 	})
-
-	// }
-	// robot := gobot.NewRobot("servoBot",
-	// 	[]gobot.Connection{firmataAdaptor},
-	// 	[]gobot.Device{servo1, servo2, servo4, servo5, servo6},
-	// 	work,
-	// )
-	// robot.Start(false)
 }
