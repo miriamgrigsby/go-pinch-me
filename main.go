@@ -432,7 +432,7 @@ func handleDragNDrop(c *gin.Context) {
 			firmataAdaptor.ServoWrite("5", d)
 			time.Sleep(20 * time.Millisecond)
 		}
-	}(uint8(60), &wg3)
+	}(uint8(55), &wg3)
 	time.Sleep(2500 * time.Millisecond)
 	go func(k uint8, wg3 *sync.WaitGroup) {
 		defer wg3.Done()
@@ -492,7 +492,7 @@ func handleDuckDuck(c *gin.Context) {
 			firmataAdaptor.ServoWrite("5", f)
 			time.Sleep(20 * time.Millisecond)
 		}
-	}(uint8(60), &wg5)
+	}(uint8(55), &wg5)
 	time.Sleep(1500 * time.Millisecond)
 
 	go func(m uint8, wg5 *sync.WaitGroup) {
@@ -545,11 +545,11 @@ func handleDuckDuck(c *gin.Context) {
 
 	go func(m uint8, wg6 *sync.WaitGroup) {
 		defer wg6.Done()
-		for f := uint8(60); f < m; f++ {
+		for f := uint8(55); f < m; f++ {
 			firmataAdaptor.ServoWrite("5", f)
 			time.Sleep(20 * time.Millisecond)
 		}
-	}(uint8(105), &wg6)
+	}(uint8(110), &wg6)
 	time.Sleep(1250 * time.Millisecond)
 
 	go func(m uint8, wg6 *sync.WaitGroup) {
@@ -595,11 +595,11 @@ func handleDuckDuck(c *gin.Context) {
 
 	go func(m uint8, wg7 *sync.WaitGroup) {
 		defer wg7.Done()
-		for f := uint8(105); f < m; f++ {
+		for f := uint8(110); f < m; f++ {
 			firmataAdaptor.ServoWrite("5", f)
 			time.Sleep(20 * time.Millisecond)
 		}
-	}(uint8(157), &wg7)
+	}(uint8(160), &wg7)
 	time.Sleep(1250 * time.Millisecond)
 
 	go func(m uint8, wg7 *sync.WaitGroup) {
