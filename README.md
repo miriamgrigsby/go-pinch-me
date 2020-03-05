@@ -97,3 +97,24 @@ At the top of the screen are the two default robot action sets, Drag N' Drop and
     ### Playing the Custom Actions
     
 	Because these actions are saved in the database, they will NOT appear in the box below the defaults unless the Golang Server is running. Once they appear, click on the action to see it play out in full. Press and hold the action to delete it. BE WARNED, this action cannot be undone and happens when the button is held for just over a second. A pop-up will then appear to confirm it was deleted from the database. 
+
+### Gobot and Firmata Protocol 
+
+Start by importing the proper packages above. 
+Download the Arduino IDE and click tools: change board and processor to match arduino
+Use usb to usb2.0 to connect the arduino to the computer
+Return to Arduino IDE and click File/Examples/StandardFirmata, verify and upload it to the Arduino
+In the Golang code: 
+	var firmataAdaptor = firmata.NewAdaptor("/dev/cu.usbmodem14201")
+		The 14201 port should match the port at the bottom right of the Arduino IDE
+	firmataAdaptor.Connect()
+		This command opens a serial connection to the arduino
+	firmataAdaptor.ServoWrite("10", 55)
+		This command will write to pin 10 on the arduino and give it a positional point of 55
+		
+	Use loops to slow down the motion
+	Use Wait Groups in conjunction with Go Routines to create synchronous movement that occurs all at once and waits 	before starting the next set of motions
+	
+Gobot New Robot command, generally seen in every example in the documentation, will play a set of motions but REQUIRES a new connection to be made so the server must be quit and restarted.
+	
+	
