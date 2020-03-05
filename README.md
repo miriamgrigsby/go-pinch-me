@@ -60,7 +60,7 @@ The app requires the following packages:
 The app requires the following packages: 
   Run these in the command line: 
 
-  go get database/sql
+	go get database/sql
 	go get database/sql/driver
 	go get encoding/json
 	go get errors
@@ -70,7 +70,7 @@ The app requires the following packages:
 	go get github.com/gin-contrib/cors
 	go get github.com/gin-gonic/gin
 	go get gobot.io/x/gobot/platforms/firmata
-  go get github.com/lib/pq
+	go get github.com/lib/pq
  
  Note: the database will not exist, unless the app is deployed. 
  
@@ -88,7 +88,7 @@ Start by clicking on Connected at the top to open a serial connection to the ard
 
     ### Creating a Set of Custom Robot Actions
     
-   On the Robot Controlls page, click New to begin creating a custom robot. Its first position will always be the default.     Now adjust the sliders to the desired positions. The sliders will STILL affect the robot giving you a visual of what your     outcome will be. Click save to add that set of motions to the overall robot. Continue with these steps to create simple or complex motions. When the desired motions are complete, click save and take note of the randomly assigned name in the pop-up. These pun-ny name will now populate on the Robot Actions page for you to see it all come together. At any point press Reset to start destroy your current build and start over. 
+	On the Robot Controlls page, click New to begin creating a custom robot. Its first position will always be the default. Now adjust the sliders to the desired positions. The sliders will STILL affect the robot giving you a visual of what your outcome will be. Click save to add that set of motions to the overall robot. Continue with these steps to create simple or complex motions. When the desired motions are complete, click save and take note of the randomly assigned name in the pop-up. These pun-ny name will now populate on the Robot Actions page for you to see it all come together. At any point press Reset to start destroy your current build and start over. 
 
 ### Robot Actions
 
@@ -96,4 +96,4 @@ At the top of the screen are the two default robot action sets, Drag N' Drop and
 
     ### Playing the Custom Actions
     
-    Because these actions are saved in the database, they will NOT appear in the box below the defaults unless the Golang Server is running. Once they appear, click on the action to see it play out in full. Press and hold the action to delete it. BE WARNED, this action cannot be undone and happens when the button is held for just over a second. A pop-up will then appear to confirm it was deleted from the database. 
+	Because these actions are saved in the database, they will NOT appear in the box below the defaults unless the Golang Server is running. Once they appear, click on the action to see it play out in full. Press and hold the action to delete it. BE WARNED, this action cannot be undone and happens when the button is held for just over a second. A pop-up will then appear to confirm it was deleted from the database. 
