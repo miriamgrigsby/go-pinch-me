@@ -86,17 +86,17 @@ From the landing page, the user can click on Robot Controlls, Robot Actions, or 
 
 Start by clicking on Connected at the top to open a serial connection to the arduino. The blue light will illuminate to indicate that a connection has been made, and the robot will move to its default position. Disconnecting will turn off the light, but will NOT actually break the connection. Below these connection buttons are sliders that control each part of the arm. The sliders match up with each part on the diagram on the left. The sliders all begin at the robot's default position. Slide them back and forth to test out what each portion of the arm does. Moving the slider at different speeds will move the robot accordingly. The roll is wild and moves out of control and at this time is intentionally disconnected. At any point, press Reset to reset the robots sliders back to default. 
 
-    ### Creating a Set of Custom Robot Actions
+### Creating a Set of Custom Robot Actions
     
-	On the Robot Controlls page, click New to begin creating a custom robot. Its first position will always be the default. Now adjust the sliders to the desired positions. The sliders will STILL affect the robot giving you a visual of what your outcome will be. Click Add to add that set of motions to the overall robot. Continue with these steps to create simple or complex motions. When the desired motions are complete, click save and take note of the randomly assigned name in the pop-up. This pun-ny name will now populate on the Robot Actions page for you to see it all come together. At any point press Reset to  destroy your current build and start over. 
+On the Robot Controlls page, click New to begin creating a custom robot. Its first position will always be the default. Now adjust the sliders to the desired positions. The sliders will STILL affect the robot giving you a visual of what your outcome will be. Click Add to add that set of motions to the overall robot. Continue with these steps to create simple or complex motions. When the desired motions are complete, click save and take note of the randomly assigned name in the pop-up. This pun-ny name will now populate on the Robot Actions page for you to see it all come together. At any point press Reset to  destroy your current build and start over. 
 
 ### Robot Actions
 
 At the top of the screen are the two default robot action sets, Drag N' Drop and Duck Duck. Drag N' Drop will pick up a rubber ducky, and rotate to drop it into a cup on the left. Duck Duck plays Duck Duck Goose with 3 rubber duckies. The body will rotate to lightly "boop" two ducks in a row before picking up a third duck sitting front and center. After picking up the duck, it will lightly return it to the ground. 
 
-    ### Playing the Custom Actions
+### Playing the Custom Actions
     
-	Because these actions are saved in the database, they will NOT appear in the box below the defaults unless the Golang Server is running. Once they appear, click on the action to see it play out in full. Press and hold the action to delete it. BE WARNED, this action cannot be undone and happens when the button is held for just over a second. A pop-up will then appear to confirm it was deleted from the database. 
+Because these actions are saved in the database, they will NOT appear in the box below the defaults unless the Golang Server is running. Once they appear, click on the action to see it play out in full. Press and hold the action to delete it. BE WARNED, this action cannot be undone and happens when the button is held for just over a second. A pop-up will then appear to confirm it was deleted from the database. 
 
 ### Gobot and Firmata Protocol 
 
@@ -112,8 +112,8 @@ In the Golang code:
 	firmataAdaptor.ServoWrite("10", 55)
 		This command will write to pin 10 on the arduino and give it a positional point of 55
 		
-	Use loops to slow down the motion
-	Use Wait Groups in conjunction with Go Routines to create synchronous movement that occurs all at once and waits 	before starting the next set of motions
+Use loops to slow down the motion
+Use Wait Groups in conjunction with Go Routines to create synchronous movement that occurs all at once and waits 	before starting the next set of motions
 	
 Gobot New Robot command, generally seen in every example in the documentation, will play a set of motions but REQUIRES a new connection to be made so the server must be quit and restarted.
 	
