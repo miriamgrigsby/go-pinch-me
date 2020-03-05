@@ -100,11 +100,15 @@ Because these actions are saved in the database, they will NOT appear in the box
 
 ### Gobot and Firmata Protocol 
 
-Start by importing the proper packages above. 
+Start by importing the proper packages above
+
 Download the Arduino IDE and click tools: change board and processor to match arduino
+
 Use usb to usb2.0 to connect the arduino to the computer
+
 Return to Arduino IDE and click File/Examples/StandardFirmata, verify and upload it to the Arduino
 In the Golang code: 
+
 	var firmataAdaptor = firmata.NewAdaptor("/dev/cu.usbmodem14201")
 		The 14201 port should match the port at the bottom right of the Arduino IDE
 	firmataAdaptor.Connect()
@@ -113,7 +117,7 @@ In the Golang code:
 		This command will write to pin 10 on the arduino and give it a positional point of 55
 		
 Use loops to slow down the motion
-Use Wait Groups in conjunction with Go Routines to create synchronous movement that occurs all at once and waits 	before starting the next set of motions
+Use Wait Groups in conjunction with Go Routines to create synchronous movement that occurs all at once and waits before starting the next set of motions
 	
 Gobot New Robot command, generally seen in every example in the documentation, will play a set of motions but REQUIRES a new connection to be made so the server must be quit and restarted.
 	
