@@ -1,5 +1,7 @@
 A Golang application using Gobot and Firmata Protocol in conjunction with an arduino mega 2560 and React-Native phone application to control a 3-D printed robotic arm. 
 
+![Screenshot](front.png)
+
 ## Video Walk Through
 
 * [Walk Through Video](https://www.youtube.com/watch?v=_EJAylseR3s)
@@ -7,8 +9,6 @@ A Golang application using Gobot and Firmata Protocol in conjunction with an ard
 ## Motivation
 
 In order to truly understand software and apply it to everyday life, I felt it was important to develop a hardware project. Arduinos are simple and a great way to learn about serial connections, the arduino IDE, and movement which served as an effective introduction to robotics.   
-
-![Screenshot](home.png)
 
 ## Getting Started
 
@@ -82,9 +82,13 @@ The main features of the app include: changing the parts of the robot with slide
 
 From the landing page, the user can click on Robot Controlls, Robot Actions, or Instructions. Inside Robot controlls, the user can manipulate individual robot movements or create a custom set of movements. Robot Actions allows the user to click on the default movements at the top, or upon any new set someone has made in the box below to watch the movements play out in real time. These new movements can also be deleted. The Instructions page gives the user more information about how to use the application. At any point, the user can click the back arrow in the top left corner to return to the landing page. 
 
+![Screenshot](home.png) 
+
 ### Robot Controlls
 
 Start by clicking on Connected at the top to open a serial connection to the arduino. The blue light will illuminate to indicate that a connection has been made, and the robot will move to its default position. Disconnecting will turn off the light, but will NOT actually break the connection. Below these connection buttons are sliders that control each part of the arm. The sliders match up with each part on the diagram on the left. The sliders all begin at the robot's default position. Slide them back and forth to test out what each portion of the arm does. Moving the slider at different speeds will move the robot accordingly. The roll is wild and moves out of control and at this time is intentionally disconnected. At any point, press Reset to reset the robots sliders back to default. 
+
+![Screenshot](arm.png)
 
 ### Creating a Set of Custom Robot Actions
     
@@ -93,6 +97,8 @@ On the Robot Controlls page, click New to begin creating a custom robot. Its fir
 ### Robot Actions
 
 At the top of the screen are the two default robot action sets, Drag N' Drop and Duck Duck. Drag N' Drop will pick up a rubber ducky, and rotate to drop it into a cup on the left. Duck Duck plays Duck Duck Goose with 3 rubber duckies. The body will rotate to lightly "boop" two ducks in a row before picking up a third duck sitting front and center. After picking up the duck, it will lightly return it to the ground. 
+
+![Screenshot](actions.png)
 
 ### Playing the Custom Actions
     
