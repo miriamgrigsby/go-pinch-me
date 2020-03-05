@@ -76,7 +76,7 @@ The app requires the following packages:
  
 ### Features
 
-The main features of the app are individually changing the parts of the robot with sliders, building a custom set of movements to be played together, playing a set or default movements (Duck Duck and Drag n Drop, deleting any created set of movements. 
+The main features of the app include: changing the parts of the robot with sliders, building a custom set of movements to be played together, playing a set or default movements (Duck Duck and Drag n Drop, deleting any created set of movements. 
 
 ### Operation Overview
 
