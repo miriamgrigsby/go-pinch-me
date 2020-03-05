@@ -60,7 +60,6 @@ var db *sql.DB
 
 var firmataAdaptor = firmata.NewAdaptor("/dev/cu.usbmodem14201")
 
-// var robot1 *gobot.Robot
 func (a NewBot) Value() (driver.Value, error) {
 	return json.Marshal(a)
 }
@@ -113,10 +112,8 @@ func handleBluetoothOff(c *gin.Context) {
 func handleSlider(c *gin.Context) {
 	var g Grip
 	c.Bind(&g)
-	fmt.Println(g)
 	firmataAdaptor.ServoWrite("10", g.Grip)
 	firmataAdaptor.ServoWrite("9", g.WristPitch)
-	// firmataAdaptor.ServoWrite("8", g.WristRoll)
 	firmataAdaptor.ServoWrite("7", g.Elbow)
 	firmataAdaptor.ServoWrite("6", g.Shoulder)
 	firmataAdaptor.ServoWrite("5", g.Waist)
@@ -198,7 +195,6 @@ func handleDeleteRobot(c *gin.Context) {
 		panic(err.Error())
 	}
 	count, _ := res.RowsAffected()
-	fmt.Println(count)
 }
 
 func handleShowNewRobot(c *gin.Context) {
@@ -233,9 +229,7 @@ func handleShowNewRobot(c *gin.Context) {
 	newBot = moveAction.Bots[0]
 	
 	var servo1, servo2, servo3, servo4, servo5, servo6 uint8 = 0, 0, 0, 0, 0, 0
-	// fmt.Println(len(moveAction.Bots))
 	for i := 1; i < len(moveAction.Bots); i++ {
-		fmt.Println(newBot)
 		if newBot.Grip > moveAction.Bots[i].Grip {
 			servo1 = 1
 		} else {
