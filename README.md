@@ -6,7 +6,7 @@ A Golang application using Gobot and Firmata Protocol in conjunction with an ard
 
 ## Motivation
 
-In order to truly understand software and apply it to everyday life, I felt it was important develop a hardware project. Arduinos are simple and a great way to learn about serial connections, the arduino IDE, and movement which served as an effective introduction to robotics.   
+In order to truly understand software and apply it to everyday life, I felt it was important to develop a hardware project. Arduinos are simple and a great way to learn about serial connections, the arduino IDE, and movement which served as an effective introduction to robotics.   
 
 ![Screenshot](home.png)
 
