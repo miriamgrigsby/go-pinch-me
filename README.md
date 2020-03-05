@@ -4,7 +4,7 @@ A Golang application using Gobot and Firmata Protocol in conjunction with an ard
 
 ## Video Walk Through
 
-* [Walk Through Video](https://www.youtube.com/watch?v=_EJAylseR3s)
+* [Walk Through Video](https://www.youtube.com/watch?v=K7uqcw6tByc)
 
 ## Motivation
 
