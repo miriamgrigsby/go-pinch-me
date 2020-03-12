@@ -195,6 +195,7 @@ func handleDeleteRobot(c *gin.Context) {
 		panic(err.Error())
 	}
 	count, _ := res.RowsAffected()
+	fmt.Println(count)
 }
 
 func handleShowNewRobot(c *gin.Context) {
@@ -230,6 +231,7 @@ func handleShowNewRobot(c *gin.Context) {
 	
 	var servo1, servo2, servo3, servo4, servo5, servo6 uint8 = 0, 0, 0, 0, 0, 0
 	for i := 1; i < len(moveAction.Bots); i++ {
+		fmt.Println(newBot)
 		if newBot.Grip > moveAction.Bots[i].Grip {
 			servo1 = 1
 		} else {
